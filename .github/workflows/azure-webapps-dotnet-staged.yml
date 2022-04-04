@@ -1,3 +1,8 @@
+# uses the cd-env-bicep service principal
+
+
+
+
 # This workflow will build and push a .NET Core app to an Azure Web App when a commit is pushed to your default branch.
 #
 # This workflow assumes you have already created the target Azure App Service web app.
@@ -17,50 +22,44 @@
 # For more information on the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # For more samples to get started with GitHub Action workflows to deploy to Azure: https://github.com/Azure/actions-workflow-samples
 
-name: Build and deploy ASP.Net Core app to an Azure Web App
-
-env:
-  AZURE_WEBAPP_NAME: your-app-name    # set this to the name of your Azure Web App
-  AZURE_WEBAPP_PACKAGE_PATH: '.'      # set this to the path to your web app project, defaults to the repository root
-  DOTNET_VERSION: '5'                 # set this to the .NET Core version to use
+name: Deploy-Staged-WebApp
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
+    paths:
+      - templates/webapp.bicep
+      - .github/workflows/azure-webapps-dotnet-staged.yml
+      
+env:
+  AZURE_RG: github-actions-staged
+  AZURE_SUBSCRIPTION: 30a911a0-bad6-47e9-8aeb-507c96ed5d18
 
 jobs:
-  build:
+  deployment: create-webapp-dev:
     runs-on: ubuntu-latest
+    environment: development
+    
+    env: 
+      AZURE-WEBAPP-NAME: mywebapp-dev
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Sources
+        uses: actions/checkout@v3
 
-      - name: Set up .NET Core
-        uses: actions/setup-dotnet@v2
+      - name: Login to Azure
+        uses: azure/login@v1
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
       
-      - name: Set up dependency caching for faster builds
-        uses: actions/cache@v3
+      - name: Deploy BICEP template
+        uses: azure/arm-deploy@v1
         with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
-
-      - name: Build with dotnet
-        run: dotnet build --configuration Release
-
-      - name: dotnet publish
-        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
-
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v3
-        with:
-          name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
+          subscriptionId: ${{ env.AZURE_SUBSCRIPTION }}
+          resourceGroupName: ${{ env.AZURE_RG }}
+          template: ./templates/webapp.bicep
+          parameters: location=westeurope appName=${{env.AZURE-WEBAPP-NAME}}
 
   deploy:
     runs-on: ubuntu-latest
