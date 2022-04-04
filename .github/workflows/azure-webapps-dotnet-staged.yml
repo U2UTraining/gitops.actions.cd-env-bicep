@@ -9,12 +9,23 @@ on:
     paths:
       - templates/webapp.bicep
       - .github/workflows/azure-webapps-dotnet-staged.yml
+  workflow_dispatch:
       
 env:
   AZURE_RG: github-actions-staged
   AZURE_SUBSCRIPTION: 30a911a0-bad6-47e9-8aeb-507c96ed5d18
+  AZURE-LOCATION: westeurope
 
 jobs:
+  RG_Job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Resource Group
+        uses: Azure/cli@v1
+        with:
+          inlineScript: 
+            az group create --name ${{ env.AZURE_RG }} --location ${{ env.AZURE-LOCATION }}
+
   Dev-Job:
     runs-on: ubuntu-latest
     environment: development
@@ -38,9 +49,7 @@ jobs:
           subscriptionId: ${{ env.AZURE_SUBSCRIPTION }}
           resourceGroupName: ${{ env.AZURE_RG }}
           template: ./templates/webapp.bicep
-          parameters: location=westeurope appName=${{env.AZURE-WEBAPP-NAME}}
-
-###
+          parameters: location=${{ ENV.AZURE-LOCATION }} appName=${{env.AZURE-WEBAPP-NAME}}
 
   Prod-Job:
     runs-on: ubuntu-latest
