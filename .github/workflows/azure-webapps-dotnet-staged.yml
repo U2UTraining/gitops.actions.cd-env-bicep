@@ -14,7 +14,7 @@ on:
 env:
   AZURE_RG: github-actions-staged
   AZURE_SUBSCRIPTION: 30a911a0-bad6-47e9-8aeb-507c96ed5d18
-  AZURE-LOCATION: westeurope
+  AZURE-LOCATION: eastUS
 
 jobs:
   RG_Job:
